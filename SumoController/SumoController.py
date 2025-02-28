@@ -56,45 +56,53 @@ class ConsoleModification:
     CLEARLINE = '\x1b[2K'
     CONSOLEUP = '\x1b[1A'
 
-
-
 class SumoBot:
     name = "Unnamed"
     connected = True
     port = -1           #network Port
     angularVelocity = 0 #rad/s
     forwardVelocity = 0 #cm/s
-    rightMotorDC = 0    #Duty Cycle
-    leftMotorDC = 0     #Duty Cycle
     def __init__(self, name, port):
         self.name = name
         self.port = port
+
+class Controller:
+    connected = False
+    usbID = -1;
+    def __init__(self, usbID):
+        self.usbID = usbID;
+
 class DisplayManager:
     RobotArray = []
+    ControllerArray = []
     ShowDebugValues = False
     Rows = 0
     Columns = 0
     NumOfRobots = 0
     #Spacing Variables
     TopOffset = 1
-    BottomOffset = 1
-    HeightOfDebugValues = 5
+    BottomOffset = 2
+    HeightOfDebugValues = 3
     # Alignment Constants
     bufferSpace = 0
     remainder = 0
     firstOffset = 0
-    def __init__(self, ShowDebugValues, Rows, Columns, RobotArray):
+    def __init__(self, ShowDebugValues, Rows, Columns, RobotArray, ControllerArray):
         self.ShowDebugValues = ShowDebugValues
         self.Rows = Rows
         self.Columns = Columns
         self.NumOfRobots = len(RobotArray)
         self.RobotArray = RobotArray
+        self.ControllerArray = ControllerArray
     
+    def PrintContectedStatus(self, isConnected):
+        return (HighlightColor.LIGHT_GREEN if isConnected  else HighlightColor.RED) + '  ' + HighlightColor.RESET
+
     def PrintConnectivityRow(self, LeftOffset, LeftRobot, MiddleOffset, RightRobot):
-        left =  LeftRobot.name  + ' ' + (HighlightColor.LIGHT_GREEN if LeftRobot.connected  else HighlightColor.RED) + '  ' + HighlightColor.RESET
+        left =  LeftRobot.name  + ' ' + self.PrintContectedStatus(LeftRobot.connected)
         print((' '*LeftOffset) + "{:<35}".format(left), end='')
         if(RightRobot != None):
-            right = RightRobot.name + ' ' + (HighlightColor.LIGHT_GREEN if RightRobot.connected else HighlightColor.RED) + '  ' + HighlightColor.RESET
+            right = RightRobot.name + ' ' + self.PrintContectedStatus(RightRobot.connected)
             print((' '*MiddleOffset), end='')
             print("{:<35}".format(right))
         else:
@@ -119,18 +127,23 @@ class DisplayManager:
         else:
             print()
 
-        print(' '*LeftOffset + 'Right DC:         ' + "{:8.3f}".format(LeftRobot.rightMotorDC),end='')
-        if(RightRobot != None):
-            print(' '*MiddleOffset + 'Right DC:         ' + "{:8.3f}".format(RightRobot.rightMotorDC))
-        else:
-            print()
+        #print(' '*LeftOffset + 'Right DC:         ' + "{:8.3f}".format(LeftRobot.rightMotorDC),end='')
+        #if(RightRobot != None):
+        #    print(' '*MiddleOffset + 'Right DC:         ' + "{:8.3f}".format(RightRobot.rightMotorDC))
+        #else:
+        #    print()
+        #
+        #print(' '*LeftOffset + 'Left DC:          ' + "{:8.3f}".format(LeftRobot.leftMotorDC),end='')
+        #if(RightRobot != None):
+        #    print(' '*MiddleOffset + 'Left DC:          ' + "{:8.3f}".format(RightRobot.leftMotorDC))
+        #else:
+        #    print()
 
-        print(' '*LeftOffset + 'Left DC:          ' + "{:8.3f}".format(LeftRobot.leftMotorDC),end='')
-        if(RightRobot != None):
-            print(' '*MiddleOffset + 'Left DC:          ' + "{:8.3f}".format(RightRobot.leftMotorDC))
-        else:
-            print()
-
+    def PrintController(self):
+        for i in range(len(self.ControllerArray)):
+            print('Controller ' + str(i+1) + ' | USB Port: ' + str(self.ControllerArray[i].usbID) + ': ' + self.PrintContectedStatus(self.ControllerArray[i].connected) + ' '*8
+                  , end='')
+        print('')
     def UpdateBlockAlignmentConstants(self):
         self.NumOfBlockRows = int(np.ceil(self.NumOfRobots/2))
         
@@ -152,7 +165,7 @@ class DisplayManager:
         else:
             ModifiedArray = self.RobotArray
         # Print page
-        print("/help for a list of commands")
+        print("'help' for a list of commands")
         for i in range(self.NumOfBlockRows):
             # symetry modification
             if(i == 0 and self.firstOffset == 1):
@@ -170,16 +183,21 @@ class DisplayManager:
 
             #Controllers
         print("\n"*self.remainder,end='')
+        self.PrintController()
 
     #def UpdateValues():
+    
 class ProgramManager:
-    Robots = [SumoBot("Robot 1", 1234), SumoBot("Robot 2", 2345),
-              SumoBot("Robot 3", 3456), SumoBot("Robot 4", 4567),
-              SumoBot("Robot 5", 5678)]#, SumoBot("Robot 6", 6789)]
-    DM = DisplayManager(True, 29, 40, Robots)
+    Robots = [SumoBot("Robot 1", 1234), SumoBot("Robot 2", 2345)]#,
+              #SumoBot("Robot 3", 3456), SumoBot("Robot 4", 4567),
+              #SumoBot("Robot 5", 5678)], SumoBot("Robot 6", 6789)]
+    Controllers = [Controller(0), Controller(1)]
+    DM = DisplayManager(True, 29, 40, Robots, Controllers)
     
     def parseCommand(self, command):
         tokens = nltk.word_tokenize(command)
+        if(len(tokens) == 0):
+            return
         if(tokens[0] == 'debug' and len(tokens) == 2):
             if(tokens[1].lower() == 'true'):
                 self.DM.ShowDebugValues = True
