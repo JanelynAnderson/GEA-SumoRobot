@@ -4,7 +4,10 @@ DriveControl::DriveControl(DriveControlCreateInfo createInfo)
 {
   this->createInfo = createInfo;
   //Initalize Right PWM Handler
+  pinMode(createInfo.leftMotorPwmPin, OUTPUT);
+
   //Initalize Left PWM Handler
+  pinMode(createInfo.rightMotorPwmPin, OUTPUT);
 }
 
 void DriveControl::step()
@@ -19,9 +22,10 @@ void DriveControl::step()
 
 void DriveControl::poststep()
 {
-
- //analogWrite(createInfo.leftMotorpwm, (((createInfo.isLeftMotorReversed)? -1 : 1)*leftDutyCycle)*255);
- //analogWrite(createInfo.rightMotorpwm, (((createInfo.isRightMotorReversed)? -1 : 1)*rightDutyCycle)*255);
+  double rightPercentOn = (((createInfo.isRightMotorReversed)? -1 : 1)*rightDutyCycle);
+  double leftPercentOn = (((createInfo.isLeftMotorReversed)? -1 : 1)*leftDutyCycle);
+  analogWrite(createInfo.rightMotorPwmPin, rightPercentOn*255);
+  analogWrite(createInfo.leftMotorPwmPin, leftPercentOn*255);
 }
 
 DCContainer DriveControl::TranslationalVelocityToDutyCycle(double translationalVelocity)

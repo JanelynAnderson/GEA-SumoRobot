@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <Arduino.h>
 #define PI  3.14
 
 struct DriveControlCreateInfo
@@ -7,8 +8,8 @@ struct DriveControlCreateInfo
   double wheelRadius;
   double maxMotorRPM;
   double turnRadius;
-  int leftMotorpwm;
-  int rightMotorpwm;
+  int leftMotorPwmPin;
+  int rightMotorPwmPin;
   bool isLeftMotorReversed;
   bool isRightMotorReversed;
 };
