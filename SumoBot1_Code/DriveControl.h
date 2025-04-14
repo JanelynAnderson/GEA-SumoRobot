@@ -43,6 +43,7 @@ public:
 
   DriveControl(DriveControlCreateInfo createInfo);
 
+  double Clamp(double val, double min, double max);
   // step the model
   void step();
   void poststep();

@@ -3,6 +3,7 @@
 DriveControl::DriveControl(DriveControlCreateInfo createInfo)
 {
   this->createInfo = createInfo;
+  
   //Initalize Right PWM Handler
   pinMode(createInfo.leftMotorPwmPin, OUTPUT);
 
@@ -16,8 +17,9 @@ void DriveControl::step()
   DCContainer rotDC = RotationalVelocityToDutyCycle(angularVelocity);
   DCContainer totDC = transDC + rotDC;
 
-  rightDutyCycle = std::clamp(totDC.DCRight,-1.0,1.0);
-  leftDutyCycle = std::clamp(totDC.DCLeft, -1.0,1.0);
+  rightDutyCycle = Clamp(totDC.DCRight,-1.0,1.0);
+  
+  leftDutyCycle = Clamp(totDC.DCLeft, -1.0,1.0);
 }
 
 void DriveControl::poststep()
@@ -41,4 +43,14 @@ DCContainer DriveControl::RotationalVelocityToDutyCycle(double angularVelocity)
 
   return DCContainer{DC,-DC};
 
+}
+
+double DriveControl::Clamp(double val, double min, double max)
+{
+  if(val < min)
+    return min;
+  else if(val > max)
+    return max;
+  else
+    return val;
 }
