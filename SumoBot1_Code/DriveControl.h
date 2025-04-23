@@ -1,6 +1,8 @@
 #pragma once
 #include <algorithm>
 #include <Arduino.h>
+#include "BluetoothClient.h"
+#include "MethodsThatShouldntExist.h"
 #define PI  3.14
 
 struct DriveControlCreateInfo
@@ -8,12 +10,20 @@ struct DriveControlCreateInfo
   double wheelRadius;
   double maxMotorRPM;
   double turnRadius;
+
   int leftMotorPwmPin;
   int rightMotorPwmPin;
+
+  int leftMotorDirPin;
+  int rightMotorDirPin;
+
   bool isLeftMotorReversed;
   bool isRightMotorReversed;
 };
 
+/**
+ * Holds a left and rihgt DC and preforms operations on them
+ */
 struct DCContainer
 {
   double DCRight;
@@ -29,30 +39,26 @@ struct DCContainer
 
 };
 
-
-
 class DriveControl
 {
 public:
+  DriveControl(DriveControlCreateInfo createInfo);
+//methods
+  void Step();
+  void Poststep();
+  void WriteControllerData(gea::GamepadData& _data_);
+//vars
   // real time inputs
   double angularVelocity = 0;
   double translationalVelocity = 0;
   // real time outputs
   double rightDutyCycle = 0;
   double leftDutyCycle = 0;
-
-  DriveControl(DriveControlCreateInfo createInfo);
-
-  double Clamp(double val, double min, double max);
-  // step the model
-  void step();
-  void poststep();
 private:
-  //RightPWMHandler Object
-  
-  //LeftPWMHandler Object
-
-  DriveControlCreateInfo createInfo;
+//methods
   DCContainer TranslationalVelocityToDutyCycle(double translationalVelocity);
   DCContainer RotationalVelocityToDutyCycle(double angularVelocity);
+//vars
+  DriveControlCreateInfo createInfo;
+  gea::GamepadData data;
 };

@@ -9,27 +9,56 @@ DriveControl::DriveControl(DriveControlCreateInfo createInfo)
 
   //Initalize Left PWM Handler
   pinMode(createInfo.rightMotorPwmPin, OUTPUT);
+
+  //Initalize Right PWM Handler
+  pinMode(createInfo.leftMotorDirPin, OUTPUT);
+
+  //Initalize Left PWM Handler
+  pinMode(createInfo.rightMotorDirPin, OUTPUT);
 }
 
-void DriveControl::step()
+/**
+ * runs all arithmtic calculations and saves them
+ */
+void DriveControl::Step()
 {
+  //gea::wStrLn( "\tx=" + std::to_string(data.rightJoystickX) + "\t\ty=" + std::to_string(data.rightJoystickY));
+  angularVelocity = 1.0 * data.leftJoystickX; //mult = max angular velocity rad/s
+  translationalVelocity = 0.7 * data.rightJoystickY; //mult = max linear velocity m/s
+
   DCContainer transDC = TranslationalVelocityToDutyCycle(translationalVelocity);
   DCContainer rotDC = RotationalVelocityToDutyCycle(angularVelocity);
   DCContainer totDC = transDC + rotDC;
 
-  rightDutyCycle = Clamp(totDC.DCRight,-1.0,1.0);
+  rightDutyCycle = gea::Clamp(totDC.DCRight,-1.0,1.0);
   
-  leftDutyCycle = Clamp(totDC.DCLeft, -1.0,1.0);
+  leftDutyCycle = gea::Clamp(totDC.DCLeft, -1.0,1.0);
+}
+/**
+ * uses calculations from step to push data to motors and such
+ */
+void DriveControl::Poststep()
+{ 
+  // Direction
+  bool RightDirection = std::signbit(rightDutyCycle);
+  if(createInfo.isRightMotorReversed) RightDirection = !RightDirection;
+
+  bool LeftDirection = std::signbit(leftDutyCycle);
+  if(createInfo.isLeftMotorReversed) LeftDirection = !LeftDirection;
+
+  digitalWrite(createInfo.leftMotorDirPin, LeftDirection);
+  digitalWrite(createInfo.rightMotorDirPin, RightDirection);
+  
+  // PWM
+  analogWrite(createInfo.rightMotorPwmPin, static_cast<int>(std::abs(rightDutyCycle*255)));
+  analogWrite(createInfo.leftMotorPwmPin, static_cast<int>(std::abs(leftDutyCycle*255)));
+
+  gea::printStrLn("Right Dir: " + std::to_string(RightDirection) + "\t\tRightPWM: " + std::to_string(static_cast<int>(std::abs(rightDutyCycle*255))));
 }
 
-void DriveControl::poststep()
-{
-  double rightPercentOn = (((createInfo.isRightMotorReversed)? -1 : 1)*rightDutyCycle);
-  double leftPercentOn = (((createInfo.isLeftMotorReversed)? -1 : 1)*leftDutyCycle);
-  analogWrite(createInfo.rightMotorPwmPin, rightPercentOn*255);
-  analogWrite(createInfo.leftMotorPwmPin, leftPercentOn*255);
-}
-
+/**
+ * Transforms the requested translational velocity into the needed Duty cycle components
+ */
 DCContainer DriveControl::TranslationalVelocityToDutyCycle(double translationalVelocity)
 {
   double DC = translationalVelocity*60/(createInfo.maxMotorRPM*2*PI*createInfo.wheelRadius);
@@ -37,6 +66,9 @@ DCContainer DriveControl::TranslationalVelocityToDutyCycle(double translationalV
   return DCContainer{DC,DC};
 }
 
+/**
+ * Transforms the requested angular velocity into the needed Duty cycle components
+ */
 DCContainer DriveControl::RotationalVelocityToDutyCycle(double angularVelocity)
 {
   double DC = angularVelocity*createInfo.turnRadius*60/(createInfo.maxMotorRPM*2*PI*createInfo.wheelRadius);
@@ -45,12 +77,11 @@ DCContainer DriveControl::RotationalVelocityToDutyCycle(double angularVelocity)
 
 }
 
-double DriveControl::Clamp(double val, double min, double max)
+/**
+ * Saves the controller data from the external semaphore to the Drive Control class
+ */
+void DriveControl::WriteControllerData(gea::GamepadData& _data_)
 {
-  if(val < min)
-    return min;
-  else if(val > max)
-    return max;
-  else
-    return val;
+  this->data = _data_;
 }
+
