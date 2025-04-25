@@ -26,7 +26,7 @@ void BluetoothClient::Setup()
    * evil.
    */
   BP32.setup(
-  [this](ControllerPtr controller) { OnConnectedGamepad(controller); },
+  [this](ControllerPtr controller) { OnConnectedGamepad(controller);    },
   [this](ControllerPtr controller) { OnDisconnectedGamepad(controller); }
   );
 
@@ -46,7 +46,8 @@ void BluetoothClient::Loop()
     Controller.GetRightJoystick(data.rightJoystickX,data.rightJoystickY); //update right joystick values  
     Controller.GetLeftJoystick(data.leftJoystickX, data.leftJoystickY); //update left joystick values
 
-    //gea::printStrLn( "\tx=" + std::to_string(data.rightJoystickX) + "\t\ty=" + std::to_string(data.rightJoystickY));
+    //gea::printStrLn( "Raw: \tx=" + std::to_string(myGamepad->axisRX()) + "\t\ty=" + std::to_string(myGamepad->axisRY()));
+    //gea::printStrLn( "Norm: \tx=" + std::to_string(data.leftJoystickX) + "\t\ty=" + std::to_string(data.leftJoystickY));
   }
 }
 

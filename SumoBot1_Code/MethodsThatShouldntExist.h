@@ -3,7 +3,7 @@
 #include <string>
 #define LED_PIN 2
 
-#define Production
+//#define Production
 
 namespace gea
 {

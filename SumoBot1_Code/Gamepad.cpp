@@ -30,11 +30,11 @@ void gea::Gamepad::GetNormalizedAxis(int32_t axisX, int32_t axisY, gea::Joystick
   // Y Normalization
   if(axisY > 0)
   {
-    normY = static_cast<double>(-axisY) / JSConfig.upperBoundY;
+    normY = static_cast<double>(axisY) / JSConfig.upperBoundY;
   } 
   else if(axisY < 0)
   {
-    normY = static_cast<double>(-axisY) / JSConfig.lowerBoundY;
+    normY = static_cast<double>(axisY) / JSConfig.lowerBoundY;
   }
   else
     normY = 0;
